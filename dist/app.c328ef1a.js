@@ -1302,7 +1302,8 @@ class PostgrestQueryBuilder {
    * numbers.
    *
    * @param options.defaultToNull - Make missing fields default to `null`.
-   * Otherwise, use the default value for the column.
+   * Otherwise, use the default value for the column. Only applies for bulk
+   * inserts.
    */
   insert(values, {
     count,
@@ -1373,7 +1374,7 @@ class PostgrestQueryBuilder {
    * @param options.defaultToNull - Make missing fields default to `null`.
    * Otherwise, use the default value for the column. This only applies when
    * inserting new rows, not when merging with existing rows under
-   * `ignoreDuplicates: false`.
+   * `ignoreDuplicates: false`. This also only applies when doing bulk upserts.
    */
   upsert(values, {
     onConflict,
@@ -1503,7 +1504,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.version = void 0;
-const version = '1.7.2';
+const version = '1.8.0';
 exports.version = version;
 },{}],"node_modules/@supabase/postgrest-js/dist/module/constants.js":[function(require,module,exports) {
 "use strict";
@@ -1556,7 +1557,7 @@ class PostgrestClient {
   } = {}) {
     this.url = url;
     this.headers = Object.assign(Object.assign({}, _constants.DEFAULT_HEADERS), headers);
-    this.schema = schema;
+    this.schemaName = schema;
     this.fetch = fetch;
   }
   /**
@@ -1568,7 +1569,21 @@ class PostgrestClient {
     const url = new URL(`${this.url}/${relation}`);
     return new _PostgrestQueryBuilder.default(url, {
       headers: Object.assign({}, this.headers),
-      schema: this.schema,
+      schema: this.schemaName,
+      fetch: this.fetch
+    });
+  }
+  /**
+   * Select a schema to query or perform an function (rpc) call.
+   *
+   * The schema needs to be on the list of exposed schemas inside Supabase.
+   *
+   * @param schema - The schema to query
+   */
+  schema(schema) {
+    return new PostgrestClient(this.url, {
+      headers: this.headers,
+      schema,
       fetch: this.fetch
     });
   }
@@ -1617,7 +1632,7 @@ class PostgrestClient {
       method,
       url,
       headers,
-      schema: this.schema,
+      schema: this.schemaName,
       body,
       fetch: this.fetch,
       allowEmpty: false
@@ -4596,7 +4611,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.version = void 0;
-const version = '2.31.0';
+const version = '2.32.0';
 exports.version = version;
 },{}],"node_modules/@supabase/supabase-js/dist/module/lib/constants.js":[function(require,module,exports) {
 "use strict";
@@ -8322,6 +8337,17 @@ class SupabaseClient {
     return this.rest.from(relation);
   }
   /**
+   * Perform a query on a schema distinct from the default schema supplied via
+   * the `options.db.schema` constructor parameter.
+   *
+   * The schema needs to be on the list of exposed schemas inside Supabase.
+   *
+   * @param schema - The name of the schema to query
+   */
+  schema(schema) {
+    return this.rest.schema(schema);
+  }
+  /**
    * Perform a function call.
    *
    * @param fn - The function name to call
@@ -8652,7 +8678,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63516" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50207" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
